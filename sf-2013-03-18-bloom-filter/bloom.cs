@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -159,12 +160,12 @@ public class CryptographicHash : IStringHash
 public class BloomFilter
 {
     IStringHash[] hashes;
-    byte[] table;
+    BitArray table;
 
     public BloomFilter (int size, IEnumerable<IStringHash> _hashes)
     {
 	hashes = _hashes.ToArray ();
-	table = new byte [size];
+	table = new BitArray (size);
     }
 
     public void Add (string str)
@@ -172,7 +173,7 @@ public class BloomFilter
 	foreach (var hash in hashes)
 	{
 	    var h = hash.Hash (str) % table.Length;
-	    table [h] = 1;
+	    table.Set ((int)h, true);
 	}
     }
 
@@ -181,7 +182,7 @@ public class BloomFilter
 	foreach (var hash in hashes)
 	{
 	    var h = hash.Hash (str) % table.Length;
-	    if (table [h] == 0)
+	    if (!table.Get ((int)h))
 		return false;
 	}
 	return true;
@@ -192,7 +193,7 @@ public class BloomFilter
 	int occupied = 0;
 	for (int i = 0; i < table.Length; ++i)
 	{
-	    if (table [i] != 0)
+	    if (table.Get (i))
 		++occupied;
 	}
 	return (float)occupied / (float)table.Length;
